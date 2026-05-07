@@ -1,6 +1,7 @@
 import type { DocJson, ManifestEntry } from '../types';
 import type { Bundle } from './bundleLoader';
 import { getJsonBlob } from './bundleLoader';
+import { R2_BASE } from '../config';
 
 const docCache = new Map<string, DocJson>();
 let manifestCache: ManifestEntry[] | null = null;
@@ -13,7 +14,7 @@ export function resetCache() {
 export async function loadManifest(bundle: Bundle | null): Promise<ManifestEntry[]> {
   if (bundle) return bundle.manifest;
   if (manifestCache) return manifestCache;
-  const res = await fetch('/doc_exports/manifest.json');
+  const res = await fetch(`${R2_BASE}/doc_exports/manifest.json`);
   if (!res.ok) throw new Error(`Failed to load manifest: ${res.status}`);
   manifestCache = (await res.json()) as ManifestEntry[];
   return manifestCache;
@@ -34,7 +35,7 @@ export async function loadDoc(entry: ManifestEntry, bundle: Bundle | null): Prom
   }
 
   const fileName = entry.json_file.split('/').pop()!;
-  const url = `/doc_exports/json/${fileName}`;
+  const url = `${R2_BASE}/doc_exports/json/${fileName}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to load doc json: ${res.status}`);
   const data = (await res.json()) as DocJson;

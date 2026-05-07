@@ -98,7 +98,7 @@ export function DropZone({ allowFallback, onFallback }: Props) {
                 className="text-xs text-slate-500 hover:text-slate-700 underline"
                 onClick={onFallback}
               >
-                跳过，使用项目内置示例数据
+                跳过，加载在线示例数据（来自 R2）
               </button>
             </div>
           )}

@@ -4,10 +4,10 @@
 
 **两种使用方式：**
 
-1. **本地开发**（看下文「第一次运行」）—— 直接在 `public/pdfs/` 与 `public/doc_exports/` 放数据，跑 dev 服务器
-2. **拖拽 zip**（看「打包数据」+「部署」小节）—— 把数据打成 zip 拖进网页就能看，可以部署到 Cloudflare Pages 给任何人用
+1. **远程示例数据**（默认）—— 直接打开网页，自动从 Cloudflare R2 加载示例 PDF + OCR 结果，零配置开箱即用
+2. **拖拽 zip**（看「打包数据」+「部署」小节）—— 把自己的数据打成 zip 拖进网页就能看，可以部署到 Cloudflare 给任何人用
 
-所有 PDF 解析、markdown 解析、diff 计算都在浏览器里跑，**zip 不会上传到任何服务器**。
+所有 PDF 渲染、markdown 解析、diff 计算都在浏览器里跑，**zip 不会上传到任何服务器**。R2 上的数据通过公开 URL 拉取，不经过任何后端。
 
 ---
 
@@ -92,11 +92,18 @@ npm run dev
 
 ## 怎么放新数据进来
 
-**本地开发**：把新 PDF 丢到 `public/pdfs/`（可放子目录），把新模型输出的 JSON 加进 `public/doc_exports/json/`，并在 `public/doc_exports/manifest.json` 里登记，刷新浏览器即可。具体格式见文末「数据约定」。
+本项目的「数据」部署在 **Cloudflare R2** 对象存储上。前端启动后，会从 `R2_BASE`（在 `src/config.ts` 里定义）拉取 `doc_exports/manifest.json` 和 `doc_exports/json/<fid>__<name>.json`，PDF 也直接从 R2 拉。
 
-> 为什么放在 `public/`？这是 Vite 的标准静态资源目录——dev 模式下直接通过 `/pdfs/...`、`/doc_exports/...` 访问，`vite build` 时会原样拷贝到 `dist/` 中部署上线，URL 路径完全一致。
+**新增一份数据的流程**：
 
-**线上拖拽**：用 `scripts/make-bundle.ps1` 打成 zip，拖到部署好的网页里。详见下文「打包数据为 zip」。
+1. 把 PDF 上传到 R2 的 `pdfs/<lang>/<doc_name>.pdf`（`<lang>` 目前是 `chinese` 或 `english`，可在 `src/config.ts` 的 `PDF_LANG_DIRS` 里扩展）
+2. 把模型输出 JSON 上传到 R2 的 `doc_exports/json/<fid>__<name>.json`
+3. 更新 R2 的 `doc_exports/manifest.json`，加一条新记录（字段格式见文末「数据约定」）
+4. 刷新页面即可——**前端代码无需改动、无需重新部署**
+
+> 💡 **关于 PDF 的语言子目录**：manifest 里的 `doc_name` 不带 `chinese/` `english/` 前缀。前端按 `PDF_LANG_DIRS` 顺序对每条记录做一次 HEAD 探测来定位，结果会按 `doc_fid` 缓存。如果你想跳过探测，可以在 manifest 条目里直接加一个 `pdf_path` 字段（如 `"pdf_path": "pdfs/chinese/9787115353009.pdf"`），前端会优先使用它。
+
+**线上拖拽 zip**：完全独立的离线路径，给同事看私密数据用。详见下文「打包数据为 zip」。
 
 ---
 

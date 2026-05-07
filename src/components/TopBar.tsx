@@ -90,7 +90,7 @@ export function TopBar() {
           <button
             className="px-2 py-1 rounded bg-emerald-700 hover:bg-emerald-600"
             onClick={() => setBundle(null)}
-            title="切回内置 doc_exports / 重新拖入新 zip"
+            title="切回在线 R2 示例数据 / 重新拖入新 zip"
           >
             zip 已加载 · 点此卸载
           </button>

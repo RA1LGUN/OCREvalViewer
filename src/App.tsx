@@ -15,15 +15,6 @@ export default function App() {
     bundle, manifest,
   } = useAppStore();
   const [mode, setMode] = useState<Mode>('choosing');
-  const [hasBuiltin, setHasBuiltin] = useState(false);
-
-  // dev 模式下试探一下是否有内置 doc_exports，作为「跳过」按钮的依据
-  useEffect(() => {
-    if (!import.meta.env.DEV) return;
-    fetch('/doc_exports/manifest.json', { method: 'HEAD' })
-      .then((r) => setHasBuiltin(r.ok))
-      .catch(() => setHasBuiltin(false));
-  }, []);
 
   // bundle 一旦就位 → 自动切到 ready 并加载第一篇
   useEffect(() => {
@@ -54,7 +45,7 @@ export default function App() {
     }
   }, [bundle, mode, manifest.length]);
 
-  const useBuiltin = async () => {
+  const useRemote = async () => {
     setLoading(true);
     try {
       const m = await loadManifest(null);
@@ -77,7 +68,7 @@ export default function App() {
         <div className="bg-slate-800 text-slate-100 px-4 py-2 text-sm font-semibold">
           OCR 模型对比可视化
         </div>
-        <DropZone allowFallback={hasBuiltin} onFallback={useBuiltin} />
+        <DropZone allowFallback onFallback={useRemote} />
       </div>
     );
   }

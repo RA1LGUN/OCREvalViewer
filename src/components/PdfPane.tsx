@@ -3,7 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import { useAppStore } from '../store';
-import { pdfUrlForDocName } from '../lib/pdfPath';
+import { resolvePdfUrl } from '../lib/pdfPath';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -16,6 +16,8 @@ export function PdfPane() {
   const [width, setWidth] = useState(600);
   const [numPages, setNumPages] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
 
   useEffect(() => {
     const ro = new ResizeObserver(() => {
@@ -27,14 +29,33 @@ export function PdfPane() {
     return () => ro.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (!currentEntry) { setUrl(null); return; }
+    let cancelled = false;
+    setResolving(true);
+    setError(null);
+    resolvePdfUrl(currentEntry, bundle)
+      .then((u) => { if (!cancelled) setUrl(u); })
+      .catch((e) => { if (!cancelled) setError((e as Error).message); })
+      .finally(() => { if (!cancelled) setResolving(false); });
+    return () => { cancelled = true; };
+  }, [currentEntry, bundle]);
+
   if (!currentEntry) {
     return <div className="p-4 text-slate-500">请选择文档</div>;
   }
 
-  const url = pdfUrlForDocName(currentEntry.doc_name, bundle);
+  if (resolving && !url) {
+    return <div className="p-4 text-slate-500 text-sm">定位 PDF 中…</div>;
+  }
 
   if (!url) {
-    return <div className="p-4 text-rose-600 text-sm">zip 中找不到 PDF：{currentEntry.doc_name}</div>;
+    return (
+      <div className="p-4 text-rose-600 text-sm">
+        找不到 PDF：{currentEntry.doc_name}
+        {bundle ? '（zip 中未包含）' : '（远程 R2 上未找到）'}
+      </div>
+    );
   }
 
   return (
