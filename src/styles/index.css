@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.diff-add {
+  background-color: rgba(16, 185, 129, 0.35);
+  border-radius: 2px;
+}
+.diff-del {
+  background-color: rgba(244, 63, 94, 0.35);
+  border-radius: 2px;
+}
+
+/* 块级标记：整块加底色 + 左侧色条 */
+.markdown-body .blk-only-a,
+.markdown-body .blk-only-b,
+.markdown-body .blk-type-diff,
+.markdown-body .blk-text-diff {
+  border-left: 3px solid transparent;
+  padding: 2px 6px;
+  margin: 4px 0;
+  border-radius: 0 4px 4px 0;
+}
+.markdown-body .blk-only-a {
+  background-color: rgba(244, 63, 94, 0.10);
+  border-left-color: rgb(244, 63, 94);
+}
+.markdown-body .blk-only-b {
+  background-color: rgba(16, 185, 129, 0.10);
+  border-left-color: rgb(16, 185, 129);
+}
+.markdown-body .blk-type-diff {
+  background-color: rgba(251, 191, 36, 0.12);
+  border-left-color: rgb(251, 191, 36);
+}
+.markdown-body .blk-text-diff {
+  background-color: rgba(59, 130, 246, 0.07);
+  border-left-color: rgb(59, 130, 246);
+}
+
+.markdown-body {
+  font-size: 14px;
+  line-height: 1.65;
+  word-break: break-word;
+}
+.markdown-body h1 { font-size: 1.6em; font-weight: 700; margin: 0.6em 0 0.4em; }
+.markdown-body h2 { font-size: 1.35em; font-weight: 700; margin: 0.6em 0 0.4em; }
+.markdown-body h3 { font-size: 1.15em; font-weight: 700; margin: 0.6em 0 0.4em; }
+.markdown-body h4 { font-weight: 700; margin: 0.5em 0 0.3em; }
+.markdown-body p  { margin: 0.4em 0; }
+.markdown-body ul, .markdown-body ol { padding-left: 1.5em; margin: 0.4em 0; }
+.markdown-body code { background: #f3f4f6; padding: 1px 4px; border-radius: 3px; }
+.markdown-body pre  { background: #f3f4f6; padding: 8px; border-radius: 4px; overflow-x: auto; }
+.markdown-body table { border-collapse: collapse; }
+.markdown-body th, .markdown-body td { border: 1px solid #d1d5db; padding: 4px 8px; }
+.markdown-body hr { border: none; border-top: 1px solid #e5e7eb; margin: 0.8em 0; }
+
+.react-pdf__Page__canvas {
+  margin: 0 auto;
+}
