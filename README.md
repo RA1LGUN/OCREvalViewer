@@ -4,7 +4,7 @@
 
 **两种使用方式：**
 
-1. **本地开发**（看下文「第一次运行」）—— 直接在 `pdfs/` 与 `doc_exports/` 放数据，跑 dev 服务器
+1. **本地开发**（看下文「第一次运行」）—— 直接在 `public/pdfs/` 与 `public/doc_exports/` 放数据，跑 dev 服务器
 2. **拖拽 zip**（看「打包数据」+「部署」小节）—— 把数据打成 zip 拖进网页就能看，可以部署到 Cloudflare Pages 给任何人用
 
 所有 PDF 解析、markdown 解析、diff 计算都在浏览器里跑，**zip 不会上传到任何服务器**。
@@ -92,7 +92,9 @@ npm run dev
 
 ## 怎么放新数据进来
 
-**本地开发**：把新 PDF 丢到 `pdfs/`（可放子目录），把新模型输出的 JSON 加进 `doc_exports/json/`，并在 `doc_exports/manifest.json` 里登记，刷新浏览器即可。具体格式见文末「数据约定」。
+**本地开发**：把新 PDF 丢到 `public/pdfs/`（可放子目录），把新模型输出的 JSON 加进 `public/doc_exports/json/`，并在 `public/doc_exports/manifest.json` 里登记，刷新浏览器即可。具体格式见文末「数据约定」。
+
+> 为什么放在 `public/`？这是 Vite 的标准静态资源目录——dev 模式下直接通过 `/pdfs/...`、`/doc_exports/...` 访问，`vite build` 时会原样拷贝到 `dist/` 中部署上线，URL 路径完全一致。
 
 **线上拖拽**：用 `scripts/make-bundle.ps1` 打成 zip，拖到部署好的网页里。详见下文「打包数据为 zip」。
 
@@ -136,7 +138,7 @@ React 18 + TypeScript + Vite + Tailwind CSS + react-pdf + react-markdown + remar
 
 ## 打包数据为 zip
 
-写好的 `scripts/make-bundle.ps1` 会把 `doc_exports/` + `pdfs/` 打成可拖入网页的 zip：
+写好的 `scripts/make-bundle.ps1` 会把 `public/doc_exports/` + `public/pdfs/` 打成可拖入网页的 zip：
 
 ```powershell
 # 打包所有文档
@@ -235,7 +237,10 @@ git push
 | Framework preset | **None**（不要选 Vite，预设设置反而不全） |
 | Build command | `npm run build` |
 | Build output directory | `dist` |
+| Deploy command | `npx wrangler pages deploy dist --project-name=ocr-diff` |
 | Root directory (advanced) | 留空 |
+
+> ⚠️ **不要使用** `npx wrangler deploy`（那是 Workers 命令）。Workers 的 deploy 会触发 Vite 集成检查，要求 Vite ≥ 6，本项目 Vite 5 会直接构建失败。本项目是纯静态站点，必须用 `wrangler pages deploy`。
 
 **展开 Environment variables，必须加一个：**
 
@@ -307,10 +312,10 @@ npx wrangler pages deploy dist --project-name=ocr-diff
 
 ## 数据约定
 
-**`pdfs/`**
-原始 PDF。可放在根目录或一级子目录（如 `pdfs/chinese/`、`pdfs/english/`），dev 模式下 Vite 会自动递归查找；zip 模式下要平铺在 `pdfs/` 下。
+**`public/pdfs/`**
+原始 PDF。可放在根目录或一级子目录（如 `public/pdfs/chinese/`、`public/pdfs/english/`），dev / 构建模式下 Vite 会原样发布到站点 `/pdfs/...`；zip 模式下要平铺在 zip 内的 `pdfs/` 下。
 
-**`doc_exports/manifest.json` / 或 zip 里的 `manifest.json`**
+**`public/doc_exports/manifest.json` / 或 zip 里的 `manifest.json`**
 文档清单：
 
 ```json
