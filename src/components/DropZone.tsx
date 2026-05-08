@@ -94,12 +94,12 @@ export function DropZone({ allowFallback, onFallback }: Props) {
 
           {allowFallback && (
             <div className="mt-5">
-              <button
+              {/* <button
                 className="text-xs text-slate-500 hover:text-slate-700 underline"
                 onClick={onFallback}
               >
                 跳过，加载在线示例数据（来自 R2）
-              </button>
+              </button> */}
             </div>
           )}
         </div>
