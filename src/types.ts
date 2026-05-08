@@ -5,8 +5,8 @@ export interface ManifestEntry {
   markdown_dir: string;
   markdown_files: string[];
   /**
-   * 可选：PDF 在 R2 上的相对路径（相对于 R2_BASE），如 "pdfs/chinese/9787115353009.pdf"。
-   * 不提供时，前端会按 PDF_LANG_DIRS 顺序探测 pdfs/<lang>/<doc_name> 与 pdfs/<doc_name>。
+   * Optional: relative path of the PDF on R2 (relative to R2_BASE), e.g. "pdfs/chinese/9787115353009.pdf".
+   * When not provided, the frontend probes pdfs/<lang>/<doc_name> and pdfs/<doc_name> in PDF_LANG_DIRS order.
    */
   pdf_path?: string;
 }

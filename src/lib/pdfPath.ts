@@ -3,8 +3,8 @@ import type { Bundle } from './bundleLoader';
 import { getPdfUrl } from './bundleLoader';
 import { PDF_LANG_DIRS, R2_BASE } from '../config';
 
-// 远程 PDF URL 解析结果按 doc_fid 缓存，避免每次切页都重新探测。
-// 值为 null 表示已探测过、确认在 R2 上找不到。
+// Remote PDF URL resolution results are cached by doc_fid to avoid re-probing on every page switch.
+// A value of null means we already probed and confirmed the PDF is not available on R2.
 const remoteUrlCache = new Map<string, string | null>();
 
 async function headOk(url: string): Promise<boolean> {
@@ -17,11 +17,11 @@ async function headOk(url: string): Promise<boolean> {
 }
 
 /**
- * 解析某文档的 PDF URL：
- * - bundle 模式：直接从 zip 内查找
- * - 远程模式：优先 entry.pdf_path；否则按 PDF_LANG_DIRS 顺序探测 pdfs/<lang>/<doc_name>，最后裸 pdfs/<doc_name>
+ * Resolve the PDF URL for a document:
+ * - bundle mode: look up directly from the zip
+ * - remote mode: prefer entry.pdf_path; otherwise probe pdfs/<lang>/<doc_name> in PDF_LANG_DIRS order, then bare pdfs/<doc_name>
  *
- * 返回 null 表示真的找不到（应在 UI 上提示）。
+ * Returns null if the PDF truly cannot be found (UI should show a hint).
  */
 export async function resolvePdfUrl(
   entry: ManifestEntry,

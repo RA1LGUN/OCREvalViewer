@@ -5,7 +5,7 @@
 html, body, #root {
   height: 100%;
   margin: 0;
-  font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: -apple-system, "Segoe UI", sans-serif;
 }
 
 .diff-add {
@@ -17,7 +17,7 @@ html, body, #root {
   border-radius: 2px;
 }
 
-/* 块级标记：整块加底色 + 左侧色条 */
+/* Block-level markers: background color + left color bar */
 .markdown-body .blk-only-a,
 .markdown-body .blk-only-b,
 .markdown-body .blk-type-diff,

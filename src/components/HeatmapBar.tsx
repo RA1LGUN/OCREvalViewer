@@ -5,11 +5,11 @@ import { computeBatch, getOrInit } from '../lib/heatmap';
 export function HeatmapBar() {
   const { currentDoc, page, modelA, modelB, setPage, setModelA, setModelB } = useAppStore();
   const [baseline, setBaseline] = useState<string | null>(null);
-  const [, force] = useState(0); // 用于在批量计算进度回调时刷新
+  const [, force] = useState(0); // force re-render on batch computation progress
 
   const models = currentDoc?.ocr_results.map((r) => r.model_id) ?? [];
 
-  // 当文档切换时，初始化 baseline
+  // Initialize baseline when document changes
   useEffect(() => {
     if (currentDoc && (!baseline || !models.includes(baseline))) {
       setBaseline(models[0] ?? null);
@@ -17,7 +17,7 @@ export function HeatmapBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDoc?.doc_fid]);
 
-  // baseline 或文档变化时启动批量计算
+  // Start batch computation when baseline or document changes
   useEffect(() => {
     if (!currentDoc || !baseline) return;
     const handle = computeBatch(currentDoc, baseline, () => force((x) => x + 1), 6);
@@ -31,7 +31,7 @@ export function HeatmapBar() {
 
   if (!currentDoc || !data || data.rows.length === 0) return null;
 
-  // 计算颜色刻度：以当前已算出的最大值为上界
+  // Compute color scale: upper bound = max score computed so far
   let maxScore = 1;
   for (const row of data.rows) {
     for (const s of row.scores) if (s !== null && s > maxScore) maxScore = s;
@@ -46,7 +46,7 @@ export function HeatmapBar() {
   return (
     <div className="bg-slate-900 text-slate-200 px-3 py-2 border-b border-slate-700 text-xs">
       <div className="flex items-center gap-3 mb-1.5">
-        <span className="text-slate-400">概览（差异热力图）</span>
+        <span className="text-slate-400">Overview (divergence heatmap)</span>
         <span className="text-slate-400">baseline:</span>
         <select
           className="bg-slate-700 px-2 py-0.5 rounded text-xs"
@@ -55,7 +55,7 @@ export function HeatmapBar() {
         >
           {models.map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
-        <span className="text-slate-500">点击格子跳转到该页 + 切换为 baseline vs 该模型</span>
+        <span className="text-slate-500">Click a cell to jump to that page + switch to baseline vs that model</span>
       </div>
       <div className="overflow-x-auto">
         <table className="border-separate border-spacing-[1px]">
@@ -75,7 +75,7 @@ export function HeatmapBar() {
                     <td
                       key={p}
                       onClick={() => onCellClick(row.modelId, p)}
-                      title={`${row.modelId} · 页 ${p + 1}\n分歧度: ${score === null ? '计算中…' : score.toFixed(1)}`}
+                      title={`${row.modelId} · page ${p + 1}\nDivergence: ${score === null ? 'computing...' : score.toFixed(1)}`}
                       style={{
                         background: bg,
                         width: 10,
@@ -91,7 +91,7 @@ export function HeatmapBar() {
             ))}
             <tr>
               <td />
-              {/* 简易页号刻度：每 10 页一个标 */}
+              {/* Simple page number ticks: every 10 pages */}
               {data.rows[0]?.scores.map((_, p) => (
                 <td key={p} className="text-[9px] text-slate-500 text-center">
                   {(p + 1) % 10 === 0 ? p + 1 : ''}
@@ -106,9 +106,9 @@ export function HeatmapBar() {
 }
 
 function scoreToColor(score: number, max: number): string {
-  // 0 = 灰 (一致)，max = 深红
+  // 0 = gray (identical), max = dark red
   const t = Math.min(1, score / max);
-  // 线性插值：rgb(51,65,85) → rgb(220,38,38)
+  // Linear interpolation: rgb(51,65,85) → rgb(220,38,38)
   const r = Math.round(51 + (220 - 51) * t);
   const g = Math.round(65 + (38 - 65) * t);
   const b = Math.round(85 + (38 - 85) * t);

@@ -1,10 +1,10 @@
-// 语义块级 diff：
-// 1) 把两份 markdown 解析为 mdast；
-// 2) 按块对齐（LCS on block signatures + 文本相似度），分四类：
-//    equal / text-diff / type-diff / only-A / only-B；
-// 3) text-diff 块内做词级 diff；
-// 4) 把分类信息编码到 mdast 节点的 data.hProperties 上，
-//    交给 react-markdown 在渲染时上色。
+// Semantic block-level diff:
+// 1) Parse both markdown strings into mdast;
+// 2) Align blocks (LCS on block signatures + text similarity), classifying into four categories:
+//    equal / text-diff / type-diff / only-A / only-B;
+// 3) For text-diff blocks, perform word-level diff internally;
+// 4) Encode classification info into mdast node data.hProperties,
+//    so react-markdown can color them during rendering.
 
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
@@ -30,19 +30,19 @@ export interface DiffStats {
   typeDiff: number;
   onlyA: number;
   onlyB: number;
-  /** 越大表示分歧越大，用于热力图 */
+  /** Higher values indicate greater divergence; used for the heatmap */
   divergenceScore: number;
 }
 
 export interface DiffResult {
-  /** A 视角：保留 A 的块，标 only-a / type-diff / text-diff / equal；
-   *  并在 only-b 块的位置插入「占位」块以提示 B 多了什么（轻量方式：仅累计在 stats，不插入，避免破坏 A 的可读性） */
+  /** A-side perspective: keep A's blocks, marking only-a / type-diff / text-diff / equal;
+   *  at only-b positions, insert placeholder blocks to hint what B has extra (lightweight: only accumulated in stats, not inserted, to preserve A's readability) */
   aRoot: Root;
   bRoot: Root;
   stats: DiffStats;
 }
 
-/** 块签名：类型 + 关键属性。用于 LCS 时初筛。 */
+/** Block signature: type + key attributes. Used for initial filtering during LCS. */
 function blockSignature(node: RootContent): string {
   switch (node.type) {
     case 'heading':
@@ -64,8 +64,8 @@ function normalizeText(s: string): string {
     .toLowerCase();
 }
 
-/** 用 1-shingle (字符 bigram for CJK + 词 unigram) 算 Jaccard，便于跨语言鲁棒。
- *  这里简化为字符 bigram + 数字/英文词。 */
+/** Compute Jaccard similarity using 1-shingle (character bigrams for CJK + word unigrams), robust across languages.
+ *  Simplified here to character bigrams + numeric/English words. */
 function similarity(a: string, b: string): number {
   if (!a && !b) return 1;
   if (!a || !b) return 0;
@@ -85,7 +85,7 @@ function shingles(s: string): Set<string> {
     const ch = n.slice(i, i + 2);
     if (ch.trim().length > 0) out.add(ch);
   }
-  // 词级补充（英文/数字）
+  // Word-level supplement (English / numeric)
   for (const w of n.split(/[^\p{L}\p{N}]+/u)) {
     if (w.length >= 2) out.add(`w:${w}`);
   }
@@ -108,26 +108,26 @@ function buildMeta(root: Root): BlockMeta[] {
   }));
 }
 
-/** 两块是否「可以认为是同一段经过 OCR 微扰后的对应块」 */
+/** Whether two blocks "can be considered corresponding blocks after OCR perturbation" */
 function isMatch(a: BlockMeta, b: BlockMeta): boolean {
   if (a.sig === b.sig) {
-    // 同类型时：内容空块（如分隔线）直接 match；其它要求相似度 > 0.4
+    // Same type: empty content blocks (e.g. thematic breaks) match directly; others require similarity > 0.4
     if (a.node.type === 'thematicBreak') return true;
     if (a.text.length === 0 && b.text.length === 0) return true;
     return similarity(a.text, b.text) >= 0.4;
   }
-  // 跨类型也允许「类型不同但文本几乎相同」→ type-diff，是有意义的格式差异
+  // Cross-type also allows "different type but nearly identical text" → type-diff, a meaningful formatting difference
   if (a.text && b.text) {
     return similarity(a.text, b.text) >= 0.7;
   }
   return false;
 }
 
-/** LCS on metas with custom equality. 返回匹配对 [(i,j), ...]，按 i 升序。 */
+/** LCS on metas with custom equality. Returns matching pairs [(i,j), ...] in ascending i order. */
 function lcsMatch(A: BlockMeta[], B: BlockMeta[]): Array<[number, number]> {
   const n = A.length;
   const m = B.length;
-  // 为了控制内存，先构建表（OCR 一页通常 <200 块，可承受）
+  // Build the DP table (OCR pages typically have <200 blocks, so memory is acceptable)
   const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
   for (let i = 1; i <= n; i++) {
     for (let j = 1; j <= m; j++) {
@@ -155,11 +155,10 @@ function lcsMatch(A: BlockMeta[], B: BlockMeta[]): Array<[number, number]> {
   return pairs.reverse();
 }
 
-/** 给单个 mdast 节点附 class（通过 data.hProperties.className，rehype 会读取） */
+/** Attach a class to a single mdast node (via data.hProperties.className, which rehype reads) */
 function setClass(node: RootContent, cls: string) {
-  // mdast 节点也可以挂 data，react-markdown 通过 rehype 转换会保留
-  // 但实际上 react-markdown v9 是 mdast → hast 走 mdast-util-to-hast，
-  // 该工具会读取 node.data.hProperties，把它注入到 hast 节点 properties 里。
+  // mdast nodes can also carry data; react-markdown v9 converts mdast → hast via mdast-util-to-hast,
+  // which reads node.data.hProperties and injects them into the hast node properties.
   const n = node as RootContent & { data?: { hProperties?: Record<string, unknown> } };
   n.data = n.data ?? {};
   n.data.hProperties = n.data.hProperties ?? {};
@@ -167,10 +166,11 @@ function setClass(node: RootContent, cls: string) {
   n.data.hProperties.className = (existing ? existing + ' ' : '') + cls;
 }
 
-/** 把一段「text-diff」块内部的纯文本节点替换为词级 diff 标记。
- *  做法：找节点里所有 text 类节点，把整块文本拼起来与对方块文本做词级 diff，
- *  然后把整块的 children 替换为一个 paragraph-like 内联序列（保留原节点类型）。
- *  这是有损的（会丢失 emphasis/code 的内联格式），但对 OCR 对比已足够。 */
+/** Replace the plain text nodes inside a "text-diff" block with word-level diff markup.
+ *  Approach: find all text-type nodes in the block, concatenate their text, do word-level diff
+ *  against the counterpart block's text, then replace the block's children with a paragraph-like
+ *  inline sequence (preserving the original node type).
+ *  This is lossy (it discards inline formatting like emphasis/code), but sufficient for OCR comparison. */
 function annotateTextDiff(
   selfNode: RootContent,
   selfText: string,
@@ -182,8 +182,8 @@ function annotateTextDiff(
     side === 'a' ? selfText : otherText,
     side === 'a' ? otherText : selfText,
   );
-  // 在 A 视角：保留 unchanged + removed（A 独有的词，红色）
-  // 在 B 视角：保留 unchanged + added（B 独有的词，绿色）
+  // In A's view: keep unchanged + removed (words unique to A, shown in red)
+  // In B's view: keep unchanged + added (words unique to B, shown in green)
   const inline: Array<{ type: 'text' | 'span'; value: string; cls?: string }> = [];
   for (const c of changes) {
     if (side === 'a') {
@@ -198,13 +198,13 @@ function annotateTextDiff(
         : { type: 'text', value: c.value });
     }
   }
-  // 转换为 mdast 内联节点：text + html span
+  // Convert to mdast inline nodes: text + html span
   const newChildren: any[] = [];
   for (const seg of inline) {
     if (seg.type === 'text' || !seg.cls) {
       newChildren.push({ type: 'text', value: seg.value });
     } else {
-      // 用 html 节点包成 span（rehype-raw 会还原它）
+      // Wrap in an html span node (rehype-raw will restore it)
       const escaped = seg.value
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -212,19 +212,19 @@ function annotateTextDiff(
       newChildren.push({ type: 'html', value: `<span class="${seg.cls}">${escaped}</span>` });
     }
   }
-  // 对于 list / table 这类多层结构，直接覆盖 children 会破坏结构；
-  // 仅在「单层文本容器」（heading / paragraph）里做替换，其它块只整体上色。
+  // For multi-level structures like list / table, directly overwriting children would break structure;
+  // only replace children in "single-level text containers" (heading / paragraph); other blocks only get overall coloring.
   if (selfNode.type === 'heading' || selfNode.type === 'paragraph') {
     (selfNode as Parent).children = newChildren;
   }
-  // 其它结构（list / table / blockquote）保持原 children，仅靠外层 class 上整体淡蓝底
+  // Other structures (list / table / blockquote) keep original children, only get a light blue background via outer class
 }
 
 export interface ComputeOptions {
-  /** 用 A 文本做 word diff 的对端文本（外部传入，避免重复 toString） */
+  /** The counterpart text for word diff against A's text (passed externally to avoid repeated toString) */
 }
 
-/** 内部：解析 + 对齐 + 标注，返回 stats 与「用于渲染的 plugin」 */
+/** Internal: parse + align + annotate, returning stats and a "plugin for rendering" */
 function annotate(aMd: string, bMd: string) {
   const aRoot = parser.parse(aMd) as Root;
   const bRoot = parser.parse(bMd) as Root;
@@ -248,7 +248,7 @@ function annotate(aMd: string, bMd: string) {
   let onlyA = 0;
   let onlyB = 0;
 
-  // 先处理 A 视角
+  // Process A side first
   for (let i = 0; i < aMeta.length; i++) {
     const a = aMeta[i];
     if (!matchedA.has(i)) {
@@ -262,11 +262,11 @@ function annotate(aMd: string, bMd: string) {
     const sameText = normalizeText(a.text) === normalizeText(b.text);
     if (sameSig && sameText) {
       equal++;
-      // 不上色
+      // No coloring
     } else if (!sameSig) {
       setClass(a.node, 'blk-type-diff');
       typeDiff++;
-      // 跨类型时也做词级 diff（但 children 替换只在 paragraph/heading 内有效）
+      // Cross-type also does word-level diff (but children replacement only works inside paragraph/heading)
       annotateTextDiff(a.node, a.text, b.text, 'a');
     } else {
       setClass(a.node, 'blk-text-diff');
@@ -274,7 +274,7 @@ function annotate(aMd: string, bMd: string) {
       annotateTextDiff(a.node, a.text, b.text, 'a');
     }
   }
-  // 处理 B 视角
+  // Process B side
   for (let j = 0; j < bMeta.length; j++) {
     const b = bMeta[j];
     if (!matchedB.has(j)) {
@@ -282,7 +282,7 @@ function annotate(aMd: string, bMd: string) {
       onlyB++;
       continue;
     }
-    // 找 A 中对应的
+    // Find the corresponding block in A
     let i = -1;
     for (const [k, v] of pairMap.entries()) if (v === j) { i = k; break; }
     if (i === -1) continue;
@@ -290,7 +290,7 @@ function annotate(aMd: string, bMd: string) {
     const sameSig = a.sig === b.sig;
     const sameText = normalizeText(a.text) === normalizeText(b.text);
     if (sameSig && sameText) {
-      // equal，不上色
+      // equal, no coloring
     } else if (!sameSig) {
       setClass(b.node, 'blk-type-diff');
       annotateTextDiff(b.node, b.text, a.text, 'b');
@@ -300,7 +300,7 @@ function annotate(aMd: string, bMd: string) {
     }
   }
 
-  // divergence: 越大表示分歧越大（用于热力图）
+  // divergence: higher values indicate greater divergence (used for heatmap)
   const divergenceScore = onlyA + onlyB + typeDiff * 0.7 + textDiff * 0.3;
 
   return {
@@ -319,18 +319,18 @@ function annotate(aMd: string, bMd: string) {
   };
 }
 
-/** 计算两份 markdown 的语义 diff，返回：
- *   - aPlugin / bPlugin：可塞进 react-markdown 的 remarkPlugins 数组，
- *     在解析阶段用「已标注好的 mdast」覆盖 react-markdown 自己解析的 AST，
- *     从而把 data.hProperties.className 一直传递到 hast → DOM。
- *   - stats：用于热力图与图例统计。 */
+/** Compute the semantic diff of two markdown strings, returning:
+ *   - aPlugin / bPlugin: can be plugged into react-markdown's remarkPlugins array,
+ *     overriding react-markdown's own AST with the pre-annotated mdast during parsing,
+ *     so that data.hProperties.className propagates all the way to hast → DOM.
+ *   - stats: used for heatmap and legend statistics. */
 export function semanticDiff(aMd: string, bMd: string): {
   aPlugin: () => (tree: Root) => void;
   bPlugin: () => (tree: Root) => void;
   stats: DiffStats;
 } {
   const result = annotate(aMd, bMd);
-  // 构造 plugin：把 tree.children 替换为我们标注后的 children
+  // Build plugin: replace tree.children with our annotated children
   const aPlugin = () => (tree: Root) => {
     tree.children = result.aRoot.children;
   };

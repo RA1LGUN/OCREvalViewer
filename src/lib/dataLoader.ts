@@ -27,7 +27,7 @@ export async function loadDoc(entry: ManifestEntry, bundle: Bundle | null): Prom
 
   if (bundle) {
     const blob = getJsonBlob(bundle, entry.json_file);
-    if (!blob) throw new Error(`zip 中找不到 ${entry.json_file}`);
+    if (!blob) throw new Error(`${entry.json_file} not found in zip`);
     const text = await blob.text();
     const data = JSON.parse(text) as DocJson;
     docCache.set(cacheKey, data);

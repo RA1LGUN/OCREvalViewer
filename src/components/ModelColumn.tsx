@@ -6,8 +6,8 @@ import type { PluggableList } from 'unified';
 interface Props {
   title: string;
   markdown: string;
-  /** 由 semanticDiff 返回的 plugin，用「已标注的 mdast」覆盖默认解析结果。
-   *  必须放在 remarkParse 之后，因此通过 remarkPlugins 传入即可。 */
+  /** Plugin returned by semanticDiff that overrides the default parse result with an annotated mdast.
+   *  Must be placed after remarkParse, so passing it via remarkPlugins is sufficient. */
   extraPlugin?: () => (tree: any) => void;
 }
 

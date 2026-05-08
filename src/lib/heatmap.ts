@@ -1,10 +1,10 @@
-// 计算并缓存「文档 × 模型对 × 页」的 divergenceScore，用于热力图
+// Compute and cache "document × model pair × page" divergenceScore for the heatmap
 import { semanticDiff } from './semanticDiff';
 import type { DocJson } from '../types';
 
 export interface HeatmapRow {
   modelId: string;
-  // index = page，value = divergenceScore，null = 未计算
+  // index = page, value = divergenceScore, null = not yet computed
   scores: Array<number | null>;
 }
 
@@ -39,8 +39,8 @@ export function getOrInit(doc: DocJson, baseline: string): HeatmapData {
   return data;
 }
 
-/** 增量计算 N 页（用 setTimeout 切片避免长任务卡住主线程）。
- *  完成一批后调用 onProgress，便于 UI 重绘。 */
+/** Incrementally compute N pages (using setTimeout slicing to avoid blocking the main thread with long tasks).
+ *  Calls onProgress after each batch so the UI can re-render. */
 export function computeBatch(
   doc: DocJson,
   baseline: string,
@@ -51,7 +51,7 @@ export function computeBatch(
   const baselineResult = doc.ocr_results.find((r) => r.model_id === baseline);
   if (!baselineResult) return { cancel: () => {} };
 
-  // 收集所有待计算的 (modelIdx, page) 任务
+  // Collect all pending (modelIdx, page) tasks
   const tasks: Array<[number, number]> = [];
   for (let mi = 0; mi < data.rows.length; mi++) {
     const row = data.rows[mi];

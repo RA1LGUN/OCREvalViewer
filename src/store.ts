@@ -48,7 +48,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setModelB: (m) => set({ modelB: m }),
   setLoading: (b) => set({ loading: b }),
   setBundle: (b) => {
-    // 释放旧 bundle
+    // Release old bundle
     const prev = get().bundle;
     if (prev && prev !== b) disposeBundle(prev);
     set({ bundle: b, currentEntry: null, currentDoc: null, manifest: [] });

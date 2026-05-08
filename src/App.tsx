@@ -16,7 +16,7 @@ export default function App() {
   } = useAppStore();
   const [mode, setMode] = useState<Mode>('choosing');
 
-  // bundle 一旦就位 → 自动切到 ready 并加载第一篇
+  // Once bundle is ready → auto-switch to ready mode and load the first document
   useEffect(() => {
     if (!bundle) return;
     (async () => {
@@ -38,7 +38,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle]);
 
-  // bundle 被卸载 → 回到选择页
+  // Bundle unloaded → return to selection page
   useEffect(() => {
     if (!bundle && mode === 'ready' && manifest.length === 0) {
       setMode('choosing');
@@ -66,7 +66,7 @@ export default function App() {
     return (
       <div className="h-full flex flex-col">
         <div className="bg-slate-800 text-slate-100 px-4 py-2 text-sm font-semibold">
-          OCR 模型对比可视化
+          OCR Model Comparison
         </div>
         <DropZone allowFallback onFallback={useRemote} />
       </div>

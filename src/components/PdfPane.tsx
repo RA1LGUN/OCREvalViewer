@@ -42,30 +42,30 @@ export function PdfPane() {
   }, [currentEntry, bundle]);
 
   if (!currentEntry) {
-    return <div className="p-4 text-slate-500">请选择文档</div>;
+    return <div className="p-4 text-slate-500">Select a document</div>;
   }
 
   if (resolving && !url) {
-    return <div className="p-4 text-slate-500 text-sm">定位 PDF 中…</div>;
+    return <div className="p-4 text-slate-500 text-sm">Locating PDF...</div>;
   }
 
   if (!url) {
     return (
       <div className="p-4 text-rose-600 text-sm">
-        找不到 PDF：{currentEntry.doc_name}
-        {bundle ? '（zip 中未包含）' : '（远程 R2 上未找到）'}
+        PDF not found: {currentEntry.doc_name}
+        {bundle ? ' (not included in zip)' : ' (not found on remote R2)'}
       </div>
     );
   }
 
   return (
     <div ref={containerRef} className="h-full overflow-auto bg-slate-100 p-3">
-      {error && <div className="text-rose-600 text-sm">PDF 加载失败：{error}</div>}
+      {error && <div className="text-rose-600 text-sm">PDF load failed: {error}</div>}
       <Document
         file={url}
         onLoadSuccess={(p) => { setNumPages(p.numPages); setError(null); }}
         onLoadError={(e) => setError(e.message)}
-        loading={<div className="text-slate-500">PDF 加载中…</div>}
+        loading={<div className="text-slate-500">Loading PDF...</div>}
       >
         {numPages > 0 && (
           <Page
@@ -77,7 +77,7 @@ export function PdfPane() {
         )}
       </Document>
       <div className="text-center text-xs text-slate-500 mt-2">
-        PDF 第 {page + 1} 页（共 {numPages || '?'} 页）
+        PDF page {page + 1} (of {numPages || '?'} pages)
       </div>
     </div>
   );

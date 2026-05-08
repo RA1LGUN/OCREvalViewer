@@ -1,20 +1,20 @@
-// 把用户拖入的 zip 解压到内存，暴露虚拟 URL 供 dataLoader / pdfPath 使用。
-// 约定的 zip 内部结构：
+// Extract a user-dropped zip into memory, exposing virtual URLs for dataLoader / pdfPath.
+// Expected zip internal structure:
 //   manifest.json
 //   json/<fid>__<name>.json
 //   pdfs/[<sub>/]<doc_name>.pdf
-// 也兼容把 doc_exports/ 顶层目录一起打进去（即文件名前缀是 doc_exports/json/...）。
+// Also compatible with a top-level doc_exports/ directory (i.e. filename prefix doc_exports/json/...).
 
 import JSZip from 'jszip';
 import type { ManifestEntry } from '../types';
 
 export interface Bundle {
   manifest: ManifestEntry[];
-  /** 取 entry.json_file 的 basename 即可命中 */
+  /** Use basename of entry.json_file to look up */
   jsonByName: Map<string, Blob>;
-  /** PDF 按 doc_name 索引（仅 basename） */
+  /** PDFs indexed by doc_name (basename only) */
   pdfByName: Map<string, Blob>;
-  /** 已经为 PDF 创建过的 object URL（懒创建并复用） */
+  /** Object URLs already created for PDFs (lazily created and reused) */
   pdfUrlCache: Map<string, string>;
 }
 
@@ -30,7 +30,7 @@ export async function loadBundleFromBlob(file: Blob): Promise<Bundle> {
   const jsonByName = new Map<string, Blob>();
   const pdfByName = new Map<string, Blob>();
 
-  // 遍历 zip 里所有文件
+  // Iterate over all files in the zip
   const entries = Object.values(zip.files).filter((f) => !f.dir);
   for (const f of entries) {
     const name = f.name;
@@ -42,7 +42,7 @@ export async function loadBundleFromBlob(file: Blob): Promise<Bundle> {
       try {
         manifest = JSON.parse(text) as ManifestEntry[];
       } catch (e) {
-        throw new Error(`manifest.json 解析失败：${(e as Error).message}`);
+        throw new Error(`Failed to parse manifest.json: ${(e as Error).message}`);
       }
     } else if (lower.endsWith('.json') && (lower.includes('/json/') || lower.startsWith('json/'))) {
       const blob = await f.async('blob');
@@ -54,17 +54,17 @@ export async function loadBundleFromBlob(file: Blob): Promise<Bundle> {
   }
 
   if (!manifest) {
-    throw new Error('zip 里没有找到 manifest.json');
+    throw new Error('manifest.json not found in zip');
   }
 
-  // 校验：manifest 里引用的 json 是否都齐
+  // Validate: check that all JSON files referenced in the manifest are present
   const missing: string[] = [];
   for (const entry of manifest) {
     const jsonBase = basename(entry.json_file);
     if (!jsonByName.has(jsonBase)) missing.push(`json/${jsonBase}`);
   }
   if (missing.length > 0) {
-    console.warn('[bundle] 以下 JSON 在 zip 中缺失：', missing);
+    console.warn('[bundle] The following JSON files are missing from the zip:', missing);
   }
 
   return {
@@ -75,7 +75,7 @@ export async function loadBundleFromBlob(file: Blob): Promise<Bundle> {
   };
 }
 
-/** 释放所有为 PDF 创建过的 object URL，避免内存泄漏 */
+/** Release all object URLs created for PDFs to avoid memory leaks */
 export function disposeBundle(b: Bundle | null) {
   if (!b) return;
   for (const url of b.pdfUrlCache.values()) URL.revokeObjectURL(url);

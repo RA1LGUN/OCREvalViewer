@@ -4,7 +4,7 @@ import { loadBundleFromBlob } from '../lib/bundleLoader';
 import { resetCache } from '../lib/dataLoader';
 
 interface Props {
-  /** 是否允许显示「跳过，使用内置数据」按钮 */
+  /** Whether to show the "Skip, use built-in data" button */
   allowFallback?: boolean;
   onFallback?: () => void;
 }
@@ -18,7 +18,7 @@ export function DropZone({ allowFallback, onFallback }: Props) {
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.zip')) {
-      setError('请拖入 .zip 压缩包');
+      setError('Please drop a .zip file');
       return;
     }
     setBusy(true);
@@ -58,12 +58,12 @@ export function DropZone({ allowFallback, onFallback }: Props) {
           }`}
         >
           <div className="text-slate-700 text-lg font-semibold mb-2">
-            拖拽数据包 zip 到这里
+            Drag and drop your data zip here
           </div>
           <div className="text-slate-500 text-sm mb-5">
-            或者
+            or
             <label className="text-emerald-600 hover:text-emerald-700 cursor-pointer mx-1 underline">
-              点击选择文件
+              click to select file
               <input
                 type="file"
                 accept=".zip,application/zip"
@@ -77,7 +77,7 @@ export function DropZone({ allowFallback, onFallback }: Props) {
           </div>
 
           <div className="text-xs text-slate-500 text-left bg-slate-50 border border-slate-200 rounded p-3">
-            <div className="font-mono mb-1 text-slate-600">zip 内部结构：</div>
+            <div className="font-mono mb-1 text-slate-600">Expected zip structure:</div>
             <pre className="font-mono text-[11px] leading-relaxed">{`bundle.zip
 ├── manifest.json
 ├── json/
@@ -85,12 +85,12 @@ export function DropZone({ allowFallback, onFallback }: Props) {
 └── pdfs/
     └── <doc_name>.pdf`}</pre>
             <div className="mt-2">
-              所有解析都在你浏览器里完成，文件不会上传到任何服务器。
+              All processing happens in your browser. Files are never uploaded to any server.
             </div>
           </div>
 
-          {busy && <div className="text-amber-600 text-sm mt-4">解压中…</div>}
-          {error && <div className="text-rose-600 text-sm mt-4">错误：{error}</div>}
+          {busy && <div className="text-amber-600 text-sm mt-4">Extracting...</div>}
+          {error && <div className="text-rose-600 text-sm mt-4">Error: {error}</div>}
 
           {allowFallback && (
             <div className="mt-5">
@@ -98,7 +98,7 @@ export function DropZone({ allowFallback, onFallback }: Props) {
                 className="text-xs text-slate-500 hover:text-slate-700 underline"
                 onClick={onFallback}
               >
-                跳过，加载在线示例数据（来自 R2）
+                 Skip, load online sample data (from R2)
               </button> */}
             </div>
           )}

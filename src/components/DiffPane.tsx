@@ -20,18 +20,18 @@ export function DiffPane() {
     return { aMd: a, bMd: b, aPlugin, bPlugin, stats };
   }, [currentDoc, page, modelA, modelB]);
 
-  if (!data) return <div className="p-4 text-slate-500">选择文档与模型以开始对比</div>;
+  if (!data) return <div className="p-4 text-slate-500">Select a document and models to start comparing</div>;
 
   return (
     <div className="h-full flex flex-col bg-slate-50">
       {data.stats && (
         <div className="flex items-center gap-4 px-3 py-1 text-xs text-slate-600 bg-white border-b border-slate-200">
-          <span>本页统计：</span>
-          <Stat label="完全一致" value={data.stats.equal} cls="bg-slate-200 text-slate-700" />
-          <Stat label="文本不同" value={data.stats.textDiff} cls="bg-blue-100 text-blue-700" />
-          <Stat label="格式不同" value={data.stats.typeDiff} cls="bg-amber-100 text-amber-700" />
-          <Stat label="仅 A 有" value={data.stats.onlyA} cls="bg-rose-100 text-rose-700" />
-          <Stat label="仅 B 有" value={data.stats.onlyB} cls="bg-emerald-100 text-emerald-700" />
+          <span>Page stats: </span>
+          <Stat label="Equal" value={data.stats.equal} cls="bg-slate-200 text-slate-700" />
+          <Stat label="Text Diff" value={data.stats.textDiff} cls="bg-blue-100 text-blue-700" />
+          <Stat label="Type Diff" value={data.stats.typeDiff} cls="bg-amber-100 text-amber-700" />
+          <Stat label="Only A" value={data.stats.onlyA} cls="bg-rose-100 text-rose-700" />
+          <Stat label="Only B" value={data.stats.onlyB} cls="bg-emerald-100 text-emerald-700" />
         </div>
       )}
       <div className="flex-1 grid grid-cols-2 gap-2 p-2 overflow-hidden">

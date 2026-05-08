@@ -27,7 +27,7 @@ export function TopBar() {
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-slate-800 text-slate-100 text-sm">
-      <span className="font-semibold">OCR 对比</span>
+      <span className="font-semibold">OCR Diff</span>
 
       <select
         className="bg-slate-700 px-2 py-1 rounded max-w-[280px]"
@@ -90,16 +90,16 @@ export function TopBar() {
           <button
             className="px-2 py-1 rounded bg-emerald-700 hover:bg-emerald-600"
             onClick={() => setBundle(null)}
-            title="切回在线 R2 示例数据 / 重新拖入新 zip"
+            title="Switch back to online R2 sample data / drop a new zip"
           >
-            zip 已加载 · 点此卸载
+            zip loaded · click to unload
           </button>
         )}
-        <Legend color="rgba(244,63,94,0.3)" label="仅 A 有" />
-        <Legend color="rgba(16,185,129,0.3)" label="仅 B 有" />
-        <Legend color="rgba(251,191,36,0.3)" label="格式不同" />
-        <Legend color="rgba(59,130,246,0.18)" label="文本不同" />
-        {loading && <span className="text-amber-400">加载中…</span>}
+        <Legend color="rgba(244,63,94,0.3)" label="Only A" />
+        <Legend color="rgba(16,185,129,0.3)" label="Only B" />
+        <Legend color="rgba(251,191,36,0.3)" label="Type Diff" />
+        <Legend color="rgba(59,130,246,0.18)" label="Text Diff" />
+        {loading && <span className="text-amber-400">Loading...</span>}
       </div>
     </div>
   );
